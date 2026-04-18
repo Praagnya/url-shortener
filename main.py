@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 import time 
+from pydantic import BaseModel, Field
 from functools import wraps
+from datetime import datetime 
 
 app = FastAPI()
 
@@ -14,4 +16,11 @@ def timer(func):
         return result
     return wrapper
 
+class ShortenURLRequest(BaseModel):
+    original_url: str 
 
+class ShortenURLResponse(BaseModel):
+    original_url: str 
+    code: str 
+    shortened_url: str
+    # created_at: datetime = Field(default_factory = datetime.now) (let us not show this to user)
