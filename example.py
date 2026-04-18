@@ -1,18 +1,21 @@
-from time import time, sleep 
+import secrets
 
-def my_function(func):
-    def wrapper(*args, **kwargs):
-        start_time = time()
-        result = func(*args, **kwargs)
-        sleep(2)
-        end_time = time()  # Simulating a delay
-        time_taken = end_time - start_time
-        print(f"Time taken: {time_taken} seconds")
-        return result
-    return wrapper
+secrets_db = {}
 
-@my_function
-def add(a, b):
-    return a + b
-result = add(5, 10)
-print(f"Result: {result}")
+
+def generate_short_code(url: str):
+    """Takes a URL and gives a secret code"""
+    for code, url in secrets_db.items():
+        if url in secrets.values: 
+            return secrets_db[url]
+    else:
+        secret_code = secrets.token_urlsafe(6)
+        secrets_db[secret_code] = url
+    return secrets_db[secret_code]
+
+url = "https://example.com"
+code = generate_short_code(url)
+
+print("URL:", url)
+print("Short code:", code)
+print("DB:", secrets_db)
