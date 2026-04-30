@@ -23,6 +23,15 @@ def save_secrets_db():
     with open(SECRETS_FILE, "w") as f: 
         json.dump(serialize_secrets_db, f)
 
+def save_logging_db():
+    serialized = {}
+    for code, clicks in logging_db.items():
+        serialized[code] = [
+            {"timestamp": click["timestamp"].isoformat(), "client_ip": click["client_ip"]}
+            for click in clicks
+        ]
+    with open(LOGGING_FILE, "w") as f:
+        json.dump(serialized, f)
 
 
 @asynccontextmanager
@@ -30,6 +39,10 @@ async def lifespan(app: FastAPI):
     if SECRETS_FILE.exists():
         with open(SECRETS_FILE, "r") as f:
             secrets_db.update(json.load(f))
+    
+    if LOGGING_FILE.exists():
+        with open(LOGGING_FILE, "r") as f:
+            logging_db.update(json.load(f))
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -88,6 +101,3 @@ def redirect_to_new(code: str, request: Request):
             logging_db[code] = []
         logging_db[code].append({"timestamp": datetime.now(), "client_ip": request.client.host})
         return RedirectResponse(secrets_db[code])
-
-
-
