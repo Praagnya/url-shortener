@@ -100,9 +100,10 @@ def generate_short_code(original_url: HttpUrl):
     return secret_code
 
 @app.post("/shorten")
+@rate_limit(max_requests=10, period=60)
 @timer
-def shorten_url(request: ShortenURLRequest):
-    original_url = request.original_url
+def shorten_url(body: ShortenURLRequest, request: Request):
+    original_url = body.original_url
     secret_code = generate_short_code(original_url)
     shortened_url = f"http://localhost:8000/{secret_code}"
 
@@ -114,6 +115,7 @@ def shorten_url(request: ShortenURLRequest):
 
 
 @app.get("/{code}")
+@rate_limit(max_requests=10, period=60)
 @timer
 def redirect_to_new(code: str, request: Request):
     if not code in secrets_db: 
