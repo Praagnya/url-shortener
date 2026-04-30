@@ -100,4 +100,5 @@ def redirect_to_new(code: str, request: Request):
         if code not in logging_db:
             logging_db[code] = []
         logging_db[code].append({"timestamp": datetime.now(), "client_ip": request.client.host})
+        save_logging_db()
         return RedirectResponse(secrets_db[code])
