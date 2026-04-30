@@ -9,9 +9,10 @@ from pathlib import Path
 import json
 from contextlib import asynccontextmanager
 
-# Storage dict 
+# Storage dict
 secrets_db = {} # code to url
 logging_db = {} # code to list of click records
+rate_limit_db = {} # ip to list of request timestamps
 SECRETS_FILE = Path("secrets_db.json")
 LOGGING_FILE = Path("logging_db.json")
 
@@ -56,6 +57,28 @@ def timer(func):
         print(f"Execution time: {end_time - start_time} seconds")
         return result
     return wrapper
+
+def rate_limit(max_requests, period):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            request = kwargs.get("request")
+            client_ip = request.client.host
+
+            now = time.time()
+            if client_ip not in rate_limit_db:
+                rate_limit_db[client_ip] = []
+
+            # Keep only timestamps within the current window
+            rate_limit_db[client_ip] = [t for t in rate_limit_db[client_ip] if now - t < period]
+
+            if len(rate_limit_db[client_ip]) >= max_requests:
+                raise HTTPException(status_code=429, detail="Rate limit exceeded")
+
+            rate_limit_db[client_ip].append(now)
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
 class ShortenURLRequest(BaseModel):
     original_url: HttpUrl
